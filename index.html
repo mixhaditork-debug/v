@@ -3,41 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پنل کانفیگ V2Ray</title>
+<title>پنل پیشرفته کانفیگ V2Ray</title>
 <style>
 body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-.container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+.container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
 input, select { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
 button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 5px; margin-top: 10px;}
 pre { background: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; }
+img { display: block; margin-top: 10px; }
 </style>
 </head>
 <body>
 <div class="container">
-<h1>پنل کانفیگ V2Ray/X-UI</h1>
+<h1>پنل پیشرفته کانفیگ V2Ray/X-UI</h1>
 
-<label>آدرس سرور (IP یا Domain):</label>
-<input type="text" id="server" value="example.com">
+<label>انتخاب سرور:</label>
+<select id="server">
+  <option value="server1.example.com">Server 1</option>
+  <option value="server2.example.com">Server 2</option>
+</select>
 
 <label>پورت:</label>
 <input type="number" id="port" value="443">
 
-<label>UUID:</label>
+<label>UUID (خالی بگذارید تا خودکار ساخته شود):</label>
 <input type="text" id="uuid" value="">
 
 <label>پروتکل:</label>
 <select id="protocol">
-<option value="vmess">VMess</option>
-<option value="vless">VLESS</option>
+  <option value="vmess">VMess</option>
+  <option value="vless">VLESS</option>
+</select>
+
+<label>نوع شبکه:</label>
+<select id="net">
+  <option value="ws">WebSocket</option>
+  <option value="grpc">gRPC</option>
+</select>
+
+<label>مسیر (Path) / ServiceName (gRPC):</label>
+<input type="text" id="path" value="/">
+
+<label>TLS فعال باشد؟</label>
+<select id="tls">
+  <option value="tls">فعال</option>
+  <option value="none">غیرفعال</option>
 </select>
 
 <button onclick="generateConfig()">ساخت کانفیگ</button>
 
 <h3>کانفیگ تولید شده:</h3>
 <pre id="output"></pre>
-<button onclick="downloadConfig()">دانلود کانفیگ</button>
+
+<button onclick="downloadConfig()">دانلود JSON</button>
+<img id="qrcode" alt="QR Code کانفیگ">
+
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -52,7 +75,11 @@ function generateConfig() {
   let uuid = document.getElementById('uuid').value;
   if (!uuid) uuid = generateUUID();
   document.getElementById('uuid').value = uuid;
+
   const protocol = document.getElementById('protocol').value;
+  const net = document.getElementById('net').value;
+  const path = document.getElementById('path').value;
+  const tls = document.getElementById('tls').value;
 
   const config = {
     "v": "2",
@@ -61,15 +88,21 @@ function generateConfig() {
     "port": port,
     "id": uuid,
     "aid": "0",
-    "net": "ws",
+    "net": net,
     "type": "none",
     "host": "",
-    "path": "/",
-    "tls": "tls",
+    "path": path,
+    "tls": tls,
     "protocol": protocol
   };
 
-  document.getElementById('output').innerText = JSON.stringify(config, null, 2);
+  const configJSON = JSON.stringify(config, null, 2);
+  document.getElementById('output').innerText = configJSON;
+
+  // ساخت QR Code
+  QRCode.toDataURL(configJSON)
+    .then(url => { document.getElementById('qrcode').src = url; })
+    .catch(err => console.error(err));
 }
 
 function downloadConfig() {
