@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>پنل پیشرفته کانفیگ V2Ray</title>
+<title>پنل لینک آماده V2Ray/X-UI</title>
 <style>
 body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
 .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
@@ -15,7 +15,7 @@ img { display: block; margin-top: 10px; }
 </head>
 <body>
 <div class="container">
-<h1>پنل پیشرفته کانفیگ V2Ray/X-UI</h1>
+<h1>پنل لینک آماده V2Ray/X-UI</h1>
 
 <label>انتخاب سرور:</label>
 <select id="server">
@@ -31,8 +31,8 @@ img { display: block; margin-top: 10px; }
 
 <label>پروتکل:</label>
 <select id="protocol">
-  <option value="vmess">VMess</option>
   <option value="vless">VLESS</option>
+  <option value="vmess">VMess</option>
 </select>
 
 <label>نوع شبکه:</label>
@@ -50,12 +50,10 @@ img { display: block; margin-top: 10px; }
   <option value="none">غیرفعال</option>
 </select>
 
-<button onclick="generateConfig()">ساخت کانفیگ</button>
+<button onclick="generateLink()">ساخت لینک آماده</button>
 
-<h3>کانفیگ تولید شده:</h3>
-<pre id="output"></pre>
-
-<button onclick="downloadConfig()">دانلود JSON</button>
+<h3>لینک آماده:</h3>
+<pre id="linkOutput"></pre>
 <img id="qrcode" alt="QR Code کانفیگ">
 
 </div>
@@ -69,7 +67,7 @@ function generateUUID() {
   });
 }
 
-function generateConfig() {
+function generateLink() {
   const server = document.getElementById('server').value;
   const port = document.getElementById('port').value;
   let uuid = document.getElementById('uuid').value;
@@ -81,39 +79,32 @@ function generateConfig() {
   const path = document.getElementById('path').value;
   const tls = document.getElementById('tls').value;
 
-  const config = {
-    "v": "2",
-    "ps": "V2Ray Config",
-    "add": server,
-    "port": port,
-    "id": uuid,
-    "aid": "0",
-    "net": net,
-    "type": "none",
-    "host": "",
-    "path": path,
-    "tls": tls,
-    "protocol": protocol
-  };
+  let link = '';
+  if (protocol === 'vless') {
+    link = `vless://${uuid}@${server}:${port}?type=${net}&security=${tls}&path=${path}#V2RayConfig`;
+  } else if (protocol === 'vmess') {
+    const config = {
+      v: "2",
+      ps: "V2Ray Config",
+      add: server,
+      port: port,
+      id: uuid,
+      aid: "0",
+      net: net,
+      type: "none",
+      host: "",
+      path: path,
+      tls: tls,
+      protocol: "vmess"
+    };
+    link = "vmess://" + btoa(JSON.stringify(config));
+  }
 
-  const configJSON = JSON.stringify(config, null, 2);
-  document.getElementById('output').innerText = configJSON;
+  document.getElementById('linkOutput').innerText = link;
 
-  // ساخت QR Code
-  QRCode.toDataURL(configJSON)
+  QRCode.toDataURL(link)
     .then(url => { document.getElementById('qrcode').src = url; })
     .catch(err => console.error(err));
-}
-
-function downloadConfig() {
-  const config = document.getElementById('output').innerText;
-  if (!config) { alert("ابتدا کانفیگ بسازید"); return; }
-
-  const blob = new Blob([config], {type: 'application/json'});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'v2ray_config.json';
-  link.click();
 }
 </script>
 </body>
